@@ -1,0 +1,8 @@
+services:
+  - type: cron
+    name: erp-report
+    env: python
+    runtime: python3
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "bash start.sh"
+    schedule: "0 7 * * *"  # runs daily at 7 AM
