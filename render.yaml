@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: erp-report-bot
-    env: docker
-    region: singapore
-    plan: free
