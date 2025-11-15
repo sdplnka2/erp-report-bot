@@ -10,7 +10,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-# ENV CONFIG
 USERNAME = os.getenv("ERP_USERNAME")
 PASSWORD = os.getenv("ERP_PASSWORD")
 LOGIN_URL = "https://cloud01-in.ivydms.com/web/DMS/Welcome#"
@@ -37,7 +36,7 @@ def send_file_to_telegram(file_path):
     return r.status_code, r.text
 
 
-def switch_to_iframe_with_element(driver, element_id, wait):
+def switch_to_iframe_with_element(driver, element_id):
     iframes = driver.find_elements(By.TAG_NAME, "iframe")
 
     # Level 1
@@ -70,7 +69,7 @@ def run_job():
     options = webdriver.ChromeOptions()
     options.binary_location = CHROME_BINARY
 
-    # ULTRA LOW MEMORY CHROME OPTIONS
+    # ULTRA-LOW MEMORY MODE
     options.add_argument("--headless=new")
     options.add_argument("--disable-gpu")
     options.add_argument("--no-sandbox")
@@ -82,7 +81,6 @@ def run_job():
     options.add_argument("--disable-background-networking")
     options.add_argument("--disable-default-apps")
     options.add_argument("--disable-sync")
-    options.add_argument("--disable-breakpad")
     options.add_argument("--disable-features=VizDisplayCompositor")
     options.add_argument("--window-size=1280,720")
 
@@ -92,7 +90,6 @@ def run_job():
         "download.directory_upgrade": True,
         "safebrowsing.enabled": True
     }
-
     options.add_experimental_option("prefs", prefs)
 
     driver = webdriver.Chrome(service=Service(CHROMEDRIVER_PATH), options=options)
@@ -111,14 +108,16 @@ def run_job():
         search.clear()
         search.send_keys("sbd")
         time.sleep(2)
+
         wait.until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "ul#ui-id-1 li.ui-menu-item"))
         ).click()
+
         time.sleep(4)
 
-        if not switch_to_iframe_with_element(driver, "PeriodFromMonth", wait):
+        if not switch_to_iframe_with_element(driver, "PeriodFromMonth"):
             driver.quit()
-            return {"status": "error", "msg": "Could not locate iframe"}
+            return {"status": "error", "msg": "iframe not found"}
 
         now = datetime.datetime.now()
         month_name = now.strftime("%B")
@@ -136,6 +135,7 @@ def run_job():
             EC.element_to_be_clickable((By.XPATH, f"//span[text()='{year_name}']/parent::li"))
         ).click()
 
+        # Generate Report
         btn = wait.until(
             EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Report')]"))
         )
@@ -143,16 +143,17 @@ def run_job():
 
         time.sleep(20)
 
-        download_icon = wait.until(
+        # Download
+        icon = wait.until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "i.fa.fa-download"))
         )
-        driver.execute_script("arguments[0].click();", download_icon)
+        driver.execute_script("arguments[0].click();", icon)
 
         time.sleep(8)
 
+        # Detect file
         files = os.listdir(DOWNLOAD_DIR)
         cand = None
-
         for f in sorted(files, key=lambda x: os.path.getmtime(os.path.join(DOWNLOAD_DIR, x)), reverse=True):
             if f.lower().endswith(('.xlsx', '.xls', '.csv', '.pdf')):
                 cand = f
@@ -164,12 +165,13 @@ def run_job():
 
         final_name = f"report_{now.strftime('%Y-%m-%d_%H-%M-%S')}{os.path.splitext(cand)[1]}"
         final_path = os.path.join(DOWNLOAD_DIR, final_name)
+
         shutil.move(os.path.join(DOWNLOAD_DIR, cand), final_path)
 
         code, resp = send_file_to_telegram(final_path)
-        driver.quit()
 
-        return {"status": "ok", "file": final_name, "telegram": code}
+        driver.quit()
+        return {"status": "ok", "file": final_name, "telegram_status": code}
 
     except Exception as e:
         try:
