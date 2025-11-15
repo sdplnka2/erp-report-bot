@@ -8,21 +8,21 @@ RUN apt-get update && apt-get install -y \
     unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Chrome + Driver paths
+# Set Chrome paths
 ENV CHROME_BINARY=/usr/bin/chromium
 ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
-# Set working directory
+# Working directory
 WORKDIR /app
 
-# Copy project files
+# Copy project
 COPY . /app
 
-# Install Python dependencies
+# Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose port
+# Expose port (required for Render)
 EXPOSE 10000
 
-# Start the server
-CMD ["python", "main.py"]
+# Start server using gunicorn
+CMD ["bash", "start.sh"]
