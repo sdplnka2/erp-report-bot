@@ -1,8 +1,6 @@
 services:
   - type: web
-    name: ivy-report-web
-    env: python
-    branch: main
-    buildCommand: ""
-    startCommand: "python main.py"
+    name: erp-report-bot
+    env: docker
+    region: singapore
     plan: free
