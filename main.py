@@ -82,14 +82,19 @@ def switch_to_iframe_with_element(driver, element_id, wait):
 # MAIN SELENIUM JOB
 # ============================
 def run_job():
-    # Chrome options for Render
-    options = webdriver.ChromeOptions()
-    options.binary_location = CHROME_BINARY
-    options.add_argument("--headless=new")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1920,1080")
+options = webdriver.ChromeOptions()
+options.binary_location = CHROME_BINARY
+
+# LOW MEMORY MODE for Render Free
+options.add_argument("--headless=new")
+options.add_argument("--no-sandbox")
+options.add_argument("--disable-dev-shm-usage")
+options.add_argument("--disable-gpu")
+options.add_argument("--disable-software-rasterizer")
+options.add_argument("--single-process")
+options.add_argument("--no-zygote")
+options.add_argument("--window-size=1920,1080")
+
 
     prefs = {
         "download.default_directory": DOWNLOAD_DIR,
@@ -226,3 +231,4 @@ def health():
 # Local test server
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5000")))
+
